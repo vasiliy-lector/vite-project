@@ -4,17 +4,17 @@
 
 ## Стек
 
-| Инструмент | Назначение |
-|---|---|
-| Vite 8 | dev-сервер и продакшен-сборка |
-| React 19.2 | UI |
-| TypeScript 6 | типизация (`strict`, без deprecated-опций) |
-| vanilla-extract | CSS-in-TypeScript: стили компилируются в статический CSS на build-времени |
-| Jest 30 + Testing Library | unit-тесты (jsdom) |
-| Playwright | интеграционные и скриншотные тесты (headless Chromium) |
-| ESLint 10 + Prettier | линтинг и форматирование |
-| Yarn 4 (Berry) | пакетный менеджер (`nodeLinker: node-modules`) |
-| GitLab CI | lint / unit / build / e2e |
+| Инструмент                | Назначение                                                                |
+| ------------------------- | ------------------------------------------------------------------------- |
+| Vite 8                    | dev-сервер и продакшен-сборка                                             |
+| React 19.2                | UI                                                                        |
+| TypeScript 6              | типизация (`strict`, без deprecated-опций)                                |
+| vanilla-extract           | CSS-in-TypeScript: стили компилируются в статический CSS на build-времени |
+| Jest 30 + Testing Library | unit-тесты (jsdom)                                                        |
+| Playwright                | интеграционные и скриншотные тесты (headless Chromium)                    |
+| ESLint 10 + Prettier      | линтинг и форматирование                                                  |
+| Yarn 4 (Berry)            | пакетный менеджер (`nodeLinker: node-modules`)                            |
+| GitLab CI                 | lint / unit / build / e2e                                                 |
 
 ## Требования
 
@@ -36,18 +36,18 @@ yarn dev        # dev-сервер: http://localhost:5173
 
 ## Скрипты
 
-| Скрипт | Описание |
-|---|---|
-| `yarn dev` | dev-сервер Vite |
-| `yarn build` | typecheck + продакшен-сборка в `dist/` |
-| `yarn preview` | локальный просмотр сборки (порт 4173) |
-| `yarn typecheck` | `tsc --noEmit` |
-| `yarn lint` | ESLint |
-| `yarn format` / `yarn format:check` | Prettier |
-| `yarn test` | unit-тесты (Jest) |
-| `yarn test:coverage` | unit-тесты с покрытием (lcov) |
-| `yarn test:e2e` | Playwright: интеграционные + скриншотные тесты (собирает и поднимает `vite preview`) |
-| `yarn test:e2e:update` | обновили UI? Пересоздать базовые скриншоты |
+| Скрипт                              | Описание                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| `yarn dev`                          | dev-сервер Vite                                                                      |
+| `yarn build`                        | typecheck + продакшен-сборка в `dist/`                                               |
+| `yarn preview`                      | локальный просмотр сборки (порт 4173)                                                |
+| `yarn typecheck`                    | `tsc --noEmit`                                                                       |
+| `yarn lint`                         | ESLint                                                                               |
+| `yarn format` / `yarn format:check` | Prettier                                                                             |
+| `yarn test`                         | unit-тесты (Jest)                                                                    |
+| `yarn test:coverage`                | unit-тесты с покрытием (lcov)                                                        |
+| `yarn test:e2e`                     | Playwright: интеграционные + скриншотные тесты (собирает и поднимает `vite preview`) |
+| `yarn test:e2e:update`              | обновили UI? Пересоздать базовые скриншоты                                           |
 
 ## Структура
 
@@ -103,11 +103,11 @@ e2e/
 
 `.gitlab-ci.yml` рассчитан на gitlab.com с Docker-раннерами:
 
-| Джоба | Образ | Что делает |
-|---|---|---|
-| `lint` | node:24-alpine | typecheck + eslint + prettier check |
-| `unit` | node:24-alpine | jest с coverage (артефакт `coverage/`) |
-| `build` | node:24-alpine | vite build (артефакт `dist/`) |
-| `e2e` | mcr.microsoft.com/playwright:v1.62.1-noble | playwright test; артефакты `playwright-report/`, `test-results/`, отчёт JUnit |
+| Джоба   | Образ                                      | Что делает                                                                    |
+| ------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `lint`  | node:24-alpine                             | typecheck + eslint + prettier check                                           |
+| `unit`  | node:24-alpine                             | jest с coverage (артефакт `coverage/`)                                        |
+| `build` | node:24-alpine                             | vite build (артефакт `dist/`)                                                 |
+| `e2e`   | mcr.microsoft.com/playwright:v1.62.1-noble | playwright test; артефакты `playwright-report/`, `test-results/`, отчёт JUnit |
 
 Установка зависимостей — `yarn install --immutable` (lockfile должен быть синхронизирован).

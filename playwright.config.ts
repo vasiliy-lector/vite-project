@@ -13,10 +13,7 @@ export default defineConfig({
         ['html', { open: 'never' }],
         ['junit', { outputFile: 'test-results/junit.xml' }],
       ]
-    : [
-        ['list'],
-        ['html', { open: 'never' }],
-      ],
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',

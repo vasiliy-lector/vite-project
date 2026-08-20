@@ -15,21 +15,13 @@ export function Counter({ initialValue = 0 }: CounterProps) {
         {count}
       </p>
       <div className={controls}>
-        <button
-          type="button"
-          className={button}
-          onClick={() => setCount((current) => current - 1)}
-        >
+        <button type="button" className={button} onClick={() => setCount((current) => current - 1)}>
           Уменьшить
         </button>
         <button type="button" className={button} onClick={() => setCount(0)}>
           Сбросить
         </button>
-        <button
-          type="button"
-          className={button}
-          onClick={() => setCount((current) => current + 1)}
-        >
+        <button type="button" className={button} onClick={() => setCount((current) => current + 1)}>
           Увеличить
         </button>
       </div>
