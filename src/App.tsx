@@ -8,12 +8,7 @@ export function App() {
 
   return (
     <div className={`${app} ${isDark ? darkTheme : lightTheme}`}>
-      <button
-        type="button"
-        className={themeToggle}
-        onClick={() => setIsDark((dark) => !dark)}
-        aria-pressed={isDark}
-      >
+      <button type="button" className={themeToggle} onClick={() => setIsDark((dark) => !dark)}>
         {isDark ? 'Светлая тема' : 'Тёмная тема'}
       </button>
       <Counter />

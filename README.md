@@ -98,7 +98,8 @@ e2e/
 в `playwright.config.ts`).
 
 Базовые скриншоты лежат в git в `e2e/counter.spec.ts-snapshots/`. Имя файла включает
-платформу (`-linux.png` / `-macos.png`), поэтому базлайны генерируются под каждую ОС:
+платформу (`-chromium-darwin.png` / `-chromium-linux.png`), поэтому базлайны
+генерируются под каждую ОС:
 
 - локально (macOS): `yarn test:e2e:update`
 - под Linux (как в CI): `yarn test:e2e:update` в том же образе Playwright, что и в пайплайне

@@ -31,6 +31,16 @@ test.describe('Счётчик', () => {
     await expect(value).toHaveText('0');
   });
 
+  test('переключает тему туда и обратно', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Тёмная тема' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Тёмная тема' }).click();
+    await expect(page.getByRole('button', { name: 'Светлая тема' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Светлая тема' }).click();
+    await expect(page.getByRole('button', { name: 'Тёмная тема' })).toBeVisible();
+  });
+
   test('скриншоты состояний (light, light после клика, dark)', async ({ page }) => {
     await expect(page).toHaveScreenshot('counter-light.png', { fullPage: true });
 

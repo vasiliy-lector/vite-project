@@ -6,6 +6,7 @@ describe('Counter', () => {
   it('показывает начальное значение 0', () => {
     render(<Counter />);
     expect(screen.getByTestId('counter-value')).toHaveTextContent('0');
+    expect(screen.getByTestId('counter-value')).toHaveAttribute('aria-live', 'polite');
   });
 
   it('увеличивает значение по кнопке «Увеличить»', async () => {
@@ -13,8 +14,9 @@ describe('Counter', () => {
     render(<Counter />);
 
     await user.click(screen.getByRole('button', { name: 'Увеличить' }));
+    await user.click(screen.getByRole('button', { name: 'Увеличить' }));
 
-    expect(screen.getByTestId('counter-value')).toHaveTextContent('1');
+    expect(screen.getByTestId('counter-value')).toHaveTextContent('2');
   });
 
   it('уменьшает значение по кнопке «Уменьшить»', async () => {
