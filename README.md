@@ -14,7 +14,7 @@
 | Playwright                | интеграционные и скриншотные тесты (headless Chromium)                    |
 | ESLint 10 + Prettier      | линтинг и форматирование                                                  |
 | Yarn 4 (Berry)            | пакетный менеджер (`nodeLinker: node-modules`)                            |
-| GitLab CI                 | lint / unit / build / e2e                                                 |
+| GitHub Actions            | lint / unit / build / e2e                                                 |
 
 ## Требования
 
@@ -106,15 +106,15 @@ e2e/
 
 Порог различий: `maxDiffPixelRatio: 0.01` (см. `playwright.config.ts`).
 
-## CI (GitLab)
+## CI (GitHub Actions)
 
-`.gitlab-ci.yml` рассчитан на gitlab.com с Docker-раннерами:
+`.github/workflows/ci.yml` на GitHub-hosted раннерах (запуск: push в `main` и pull request):
 
-| Джоба   | Образ                                      | Что делает                                                                    |
-| ------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
-| `lint`  | node:24-alpine                             | typecheck + eslint + prettier check                                           |
-| `unit`  | node:24-alpine                             | jest с coverage (артефакт `coverage/`)                                        |
-| `build` | node:24-alpine                             | vite build (артефакт `dist/`)                                                 |
-| `e2e`   | mcr.microsoft.com/playwright:v1.62.1-noble | playwright test; артефакты `playwright-report/`, `test-results/`, отчёт JUnit |
+| Джоба   | Раннер                                               | Что делает                                                                    |
+| ------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `lint`  | ubuntu-latest, Node 24                               | typecheck + eslint + prettier check                                           |
+| `unit`  | ubuntu-latest, Node 24                               | jest с coverage (артефакт `coverage/`)                                        |
+| `build` | ubuntu-latest, Node 24                               | vite build (артефакт `dist/`)                                                 |
+| `e2e`   | контейнер mcr.microsoft.com/playwright:v1.62.1-noble | playwright test; артефакты `playwright-report/`, `test-results/`, отчёт JUnit |
 
 Установка зависимостей — `yarn install --immutable` (lockfile должен быть синхронизирован).

@@ -61,7 +61,7 @@ e2e/
 Key config: `vite.config.ts` (React + vanilla-extract plugins),
 `tsconfig.json` (strict), `tsconfig.jest.json` (CJS override for Jest),
 `jest.config.js`, `playwright.config.ts`, `eslint.config.js` (flat),
-`.gitlab-ci.yml`.
+`.github/workflows/ci.yml`.
 
 ## Conventions
 
@@ -106,12 +106,17 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
   will fail CI until Linux baselines are regenerated in the CI image.
 - Screenshot tolerance: `maxDiffPixelRatio: 0.01`.
 
-### CI (GitLab)
+### CI (GitHub Actions)
 
-- Jobs: `lint` (typecheck + eslint + prettier), `unit` (jest coverage),
-  `build` (vite build), `e2e` (Playwright in the official Playwright image).
-- Installs with `yarn install --immutable` — **commit `yarn.lock`** whenever
-  dependencies change.
+- Workflow: `.github/workflows/ci.yml`, triggered on push to `main` and on
+  PRs. Jobs: `lint` (typecheck + eslint + prettier), `unit` (jest coverage),
+  `build` (vite build), `e2e` (Playwright in the official Playwright image,
+  `container: mcr.microsoft.com/playwright:v1.62.1-noble`).
+- Node 24 + Yarn cache via `actions/setup-node`; installs with
+  `yarn install --immutable` — **commit `yarn.lock`** whenever dependencies
+  change.
+- Artifacts (7-day retention): `coverage/`, `dist/`, `e2e-report/`
+  (`playwright-report/` + `test-results/`).
 
 ## Gotchas
 
