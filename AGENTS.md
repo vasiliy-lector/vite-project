@@ -18,24 +18,26 @@ convention for user-facing text.
 
 All commands run from the repository root with `yarn`:
 
-| Command                | Purpose                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| `yarn`                 | Install dependencies (must keep `yarn.lock` in sync)           |
-| `yarn dev`             | Dev server on http://localhost:5173                            |
-| `yarn build`           | Typecheck (`tsc --noEmit`) + production build to `dist/`       |
-| `yarn preview`         | Serve the production build on port 4173                        |
-| `yarn typecheck`       | `tsc --noEmit`                                                 |
-| `yarn lint`            | ESLint                                                         |
-| `yarn format`          | Prettier (write)                                               |
-| `yarn format:check`    | Prettier (check only, used in CI)                              |
-| `yarn test`            | Unit tests (Jest, jsdom)                                       |
-| `yarn test:coverage`   | Unit tests + lcov coverage (`coverage/`)                       |
-| `yarn test:e2e`        | Playwright; auto-runs `yarn build && yarn preview --port 4173` |
-| `yarn test:e2e:update` | Regenerate screenshot baselines after intentional UI changes   |
+| Command                | Purpose                                                                 |
+| ---------------------- | ----------------------------------------------------------------------- |
+| `yarn`                 | Install dependencies (must keep `yarn.lock` in sync)                    |
+| `yarn dev`             | Dev server on http://localhost:5173                                     |
+| `yarn build`           | Typecheck (`tsc --noEmit`) + production build to `dist/`                |
+| `yarn preview`         | Serve the production build on port 4173                                 |
+| `yarn typecheck`       | `tsc --noEmit`                                                          |
+| `yarn lint`            | ESLint                                                                  |
+| `yarn format`          | Prettier (write)                                                        |
+| `yarn format:check`    | Prettier (check only, used in CI)                                       |
+| `yarn test`            | Unit tests (Jest, jsdom)                                                |
+| `yarn test:coverage`   | Unit tests + lcov coverage (`coverage/`)                                |
+| `yarn test:e2e`        | e2e in the official Playwright image (Linux, same as CI)                |
+| `yarn test:e2e:update` | Regenerate baselines in the same image                                  |
+| `yarn test:e2e:ci`     | Playwright directly (no Docker); CI-only (Linux), used inside the image |
 
 Run `yarn typecheck && yarn lint && yarn format:check && yarn test` before
-considering a change done. `yarn test:e2e` runs headless Chromium and is
-fully self-contained (its own `webServer` config).
+considering a change done. `yarn test:e2e:ci` runs headless Chromium and is
+fully self-contained (its own `webServer` config); `yarn test:e2e` wraps it
+in the official Playwright image.
 
 ## Project Structure
 
@@ -55,7 +57,9 @@ src/
     └── setup.ts              # jest-dom + vanilla-extract disableRuntimeStyles
 e2e/
 ├── counter.spec.ts           # Playwright tests + toHaveScreenshot
-└── counter.spec.ts-snapshots/ # Baseline PNGs, committed per-OS (see below)
+└── counter.spec.ts-snapshots/ # Baseline PNGs (Linux only)
+scripts/
+└── e2e-docker.sh             # Runs e2e in the official Playwright image
 ```
 
 Key config: `vite.config.ts` (React + vanilla-extract plugins),
@@ -99,11 +103,12 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
 - E2E: Playwright, Chromium only, `fullyParallel`. `webServer` builds and
   serves the app automatically; do not start `yarn preview` manually.
 - Screenshot baselines are committed to git under
-  `e2e/counter.spec.ts-snapshots/` and are **OS-specific** (file suffix
-  `-darwin.png` / `-linux.png`). After a UI change, update baselines for the
-  OS you work on: `yarn test:e2e:update`. CI runs on Linux (Ubuntu noble via
-  the Playwright Docker image) — mac/Windows UI changes that alter pixels
-  will fail CI until Linux baselines are regenerated in the CI image.
+  `e2e/counter.spec.ts-snapshots/` and are **Linux-only** (file suffix
+  `-linux.png`): e2e runs in the same official Playwright image both in CI
+  and locally (`yarn test:e2e`), so a single group of baselines
+  suffices. After a UI change, regenerate them with
+  `yarn test:e2e:update`. `yarn test:e2e:ci` is CI-only (Linux) — do not
+  run it on macOS.
 - Screenshot tolerance: `maxDiffPixelRatio: 0.01`.
 
 ### CI (GitHub Actions)
@@ -130,5 +135,8 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
   or CSS Modules without an explicit request.
 - **`yarn build` includes typecheck** — a build failure is often a type
   error, not a bundling error.
+- **e2e Docker image parity**: the Playwright image tag in
+  `scripts/e2e-docker.sh` must match the `container:` tag in
+  `.github/workflows/ci.yml` — baselines are generated in that exact image.
 - `.yarn/` is gitignored except the pinned release under `.yarn/releases`.
   Don't commit the Yarn cache.

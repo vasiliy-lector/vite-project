@@ -42,18 +42,19 @@ yarn dev        # dev-сервер: http://localhost:5173
 
 ## Скрипты
 
-| Скрипт                              | Описание                                                                             |
-| ----------------------------------- | ------------------------------------------------------------------------------------ |
-| `yarn dev`                          | dev-сервер Vite                                                                      |
-| `yarn build`                        | typecheck + продакшен-сборка в `dist/`                                               |
-| `yarn preview`                      | локальный просмотр сборки (порт 4173)                                                |
-| `yarn typecheck`                    | `tsc --noEmit`                                                                       |
-| `yarn lint`                         | ESLint                                                                               |
-| `yarn format` / `yarn format:check` | Prettier                                                                             |
-| `yarn test`                         | unit-тесты (Jest)                                                                    |
-| `yarn test:coverage`                | unit-тесты с покрытием (lcov)                                                        |
-| `yarn test:e2e`                     | Playwright: интеграционные + скриншотные тесты (собирает и поднимает `vite preview`) |
-| `yarn test:e2e:update`              | обновили UI? Пересоздать базовые скриншоты                                           |
+| Скрипт                              | Описание                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------- |
+| `yarn dev`                          | dev-сервер Vite                                                                 |
+| `yarn build`                        | typecheck + продакшен-сборка в `dist/`                                          |
+| `yarn preview`                      | локальный просмотр сборки (порт 4173)                                           |
+| `yarn typecheck`                    | `tsc --noEmit`                                                                  |
+| `yarn lint`                         | ESLint                                                                          |
+| `yarn format` / `yarn format:check` | Prettier                                                                        |
+| `yarn test`                         | unit-тесты (Jest)                                                               |
+| `yarn test:coverage`                | unit-тесты с покрытием (lcov)                                                   |
+| `yarn test:e2e`                     | e2e в официальном Playwright-образе (Linux, как в CI) — одна группа базлайнов   |
+| `yarn test:e2e:update`              | обновили UI? Пересоздать базлайны в том же образе                               |
+| `yarn test:e2e:ci`                  | Playwright напрямую (без Docker): только CI (Linux), используется внутри образа |
 
 ## Структура
 
@@ -97,12 +98,12 @@ e2e/
 `yarn test:e2e` сам запускает `yarn build && yarn preview --port 4173` (см. `webServer`
 в `playwright.config.ts`).
 
-Базовые скриншоты лежат в git в `e2e/counter.spec.ts-snapshots/`. Имя файла включает
-платформу (`-chromium-darwin.png` / `-chromium-linux.png`), поэтому базлайны
-генерируются под каждую ОС:
+Базовые скриншоты лежат в git в `e2e/counter.spec.ts-snapshots/` — только Linux
+(суффикс имени `-chromium-linux.png`): e2e гоняется в официальном Playwright-образе
+и в CI, и локально, поэтому одна группа базлайнов достаточно:
 
-- локально (macOS): `yarn test:e2e:update`
-- под Linux (как в CI): `yarn test:e2e:update` в том же образе Playwright, что и в пайплайне
+- запуск: `yarn test:e2e` (тесты гоняются в образе, как в CI)
+- пересоздать после изменения UI: `yarn test:e2e:update`
 
 Порог различий: `maxDiffPixelRatio: 0.01` (см. `playwright.config.ts`).
 
