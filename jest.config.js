@@ -8,7 +8,7 @@ export default {
     '\\.css\\.ts$': '@vanilla-extract/jest-transform',
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
   },
-  setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/jest-setup.ts'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/app/main.tsx'],
   coverageReporters: ['text', 'lcov'],
 };

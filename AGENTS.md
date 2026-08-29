@@ -85,8 +85,7 @@ src/
 ├── entities/                           # Framework-free business logic (empty so far)
 ├── utils/                              # Pure utilities (empty so far)
 ├── vite-env.d.ts                       # import.meta.env typing
-└── test/
-    └── setup.ts                        # TextEncoder polyfill + jest-dom + vanilla-extract
+└── jest-setup.ts                       # TextEncoder polyfill + jest-dom + vanilla-extract
 e2e/
 ├── counter.spec.ts                     # Playwright tests + toHaveScreenshot
 ├── settings.spec.ts                    # Playwright tests + toHaveScreenshot
@@ -238,7 +237,7 @@ Rules (same as README «Архитектура: уровни и правила �
   empty until the first load settles). `RootLayout.test.tsx` follows the same
   pattern with its own minimal router — it must not import `app/router`
   (app/layouts is below app/common in the layer rules).
-- `src/test/setup.ts` polyfills `TextEncoder`/`TextDecoder` (jsdom lacks them;
+- `src/jest-setup.ts` polyfills `TextEncoder`/`TextDecoder` (jsdom lacks them;
   `@tanstack/router-core` SSR serializer needs them).
 - E2E: Playwright, Chromium only, `fullyParallel`. `webServer` builds and
   serves the app automatically; do not start `yarn preview` manually.
@@ -274,7 +273,7 @@ Rules (same as README «Архитектура: уровни и правила �
   `^8.2.1`); do not disable `npmMinimalAgeGate`.
 - **vanilla-extract in Jest**: `*.css.ts` files must keep going through
   `@vanilla-extract/jest-transform` (see `jest.config.js`); runtime style
-  generation is disabled in `src/test/setup.ts`. Don't switch to plain CSS
+  generation is disabled in `src/jest-setup.ts`. Don't switch to plain CSS
   or CSS Modules without an explicit request.
 - **`yarn build` includes typecheck** — a build failure is often a type
   error, not a bundling error.
