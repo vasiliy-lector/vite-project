@@ -11,7 +11,6 @@ set -euo pipefail
 
 IMAGE='mcr.microsoft.com/playwright:v1.62.1-noble'
 VOLUME='vite-app-e2e-work'
-SNAPSHOT_DIR='e2e/counter.spec.ts-snapshots'
 MODE="${1:-test}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -43,9 +42,9 @@ case "$MODE" in
 node \"\$YARN_REL\" test:e2e:ci"
     ;;
   update)
-    docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work -v "$ROOT/$SNAPSHOT_DIR":/out -w /work "$IMAGE" bash -c "$PREAMBLE
+    docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work -v "$ROOT/e2e":/out -w /work "$IMAGE" bash -c "$PREAMBLE
 node \"\$YARN_REL\" exec playwright test --update-snapshots
-cp -a $SNAPSHOT_DIR/. /out/"
+for d in e2e/*.spec.ts-snapshots; do [ -d \"\$d\" ] && cp -a \"\$d/.\" \"/out/\$(basename \"\$d\")/\"; done"
     ;;
   *)
     echo "Unknown mode: $MODE (use test or update)" >&2
