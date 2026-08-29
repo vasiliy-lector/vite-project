@@ -3,6 +3,9 @@ import prettier from 'eslint-config-prettier';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import query from '@tanstack/eslint-plugin-query';
+import router from '@tanstack/eslint-plugin-router';
+import zustand from 'eslint-plugin-zustand';
 
 export default tseslint.config(
   {
@@ -17,6 +20,15 @@ export default tseslint.config(
     rules: {
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
+  ...query.configs['flat/recommended'],
+  ...router.configs['flat/recommended'],
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: { zustand },
+    rules: {
+      'zustand/no-destructure': ['warn', { hooks: ['useCounterStore', 'useThemeStore'] }],
     },
   },
   {
