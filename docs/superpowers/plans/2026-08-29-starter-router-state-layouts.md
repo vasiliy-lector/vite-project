@@ -24,6 +24,7 @@
 ## File Map
 
 Create:
+
 - `src/theme-store.ts` — `useThemeStore` (isDark, toggleTheme) + `resetThemeStore`
 - `src/components/counter-store.ts` — `useCounterStore` (count, increment, decrement, reset) + `resetCounterStore`
 - `src/components/counter-store.test.ts`
@@ -45,6 +46,7 @@ Create:
 - `e2e/settings.spec.ts`
 
 Modify:
+
 - `package.json` (deps + devDeps), `yarn.lock`
 - `eslint.config.js` (3 plugins), `tsconfig.json` (paths), `vite.config.ts` (alias), `jest.config.js` (moduleNameMapper)
 - `src/App.tsx` (ErrorBoundary + RouterProvider), `src/main.tsx` (QueryClientProvider)
@@ -58,10 +60,12 @@ Modify:
 ### Task 1: Toolchain — dependencies, ESLint plugins, path alias, typed env
 
 **Files:**
+
 - Modify: `package.json`, `yarn.lock`, `eslint.config.js`, `tsconfig.json`, `vite.config.ts`, `jest.config.js`
 - Create: `src/vite-env.d.ts`, `.env.example`
 
 **Interfaces:**
+
 - Produces: working `@/` alias in Vite + Jest + tsc; ESLint flat configs for `@tanstack/query/*` and `@tanstack/router/*` rules; typed `import.meta.env`.
 
 - [ ] **Step 1: Install runtime dependencies**
@@ -222,9 +226,11 @@ git commit -m "chore: add TanStack Router/Query/Form, zustand, zod, ESLint plugi
 ### Task 2: Zustand stores (theme + counter) with unit tests
 
 **Files:**
+
 - Create: `src/theme-store.ts`, `src/theme-store.test.ts`, `src/components/counter-store.ts`, `src/components/counter-store.test.ts`
 
 **Interfaces:**
+
 - Produces: `useThemeStore: isDark: boolean, toggleTheme: () => void`; `resetThemeStore(): void`; `useCounterStore: count: number, increment, decrement, reset`; `resetCounterStore(): void`.
 
 - [ ] **Step 1: Write failing tests**
@@ -359,9 +365,11 @@ git commit -m "feat: add zustand stores for theme and counter"
 ### Task 3: Counter component on useCounterStore
 
 **Files:**
+
 - Modify: `src/components/Counter.tsx`, `src/components/Counter.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `useCounterStore` selectors (Task 2).
 - Produces: `Counter` without props (state comes from the global store).
 
@@ -489,12 +497,14 @@ git commit -m "refactor: move counter state to zustand store"
 ### Task 4: Router, explicit layout route, pages, 404, ErrorBoundary
 
 **Files:**
+
 - Create: `src/router.ts`, `src/router.test.tsx`, `src/root-layout.tsx`, `src/root-layout.css.ts`, `src/home-page.tsx`, `src/settings-page.tsx`, `src/not-found-page.tsx`, `src/not-found.css.ts`, `src/error-boundary.tsx`, `src/error-boundary.test.tsx`
 - Modify: `src/App.tsx`, `src/main.tsx`
 - Delete: `src/app.css.ts` (its `app`/`themeToggle` styles move to `root-layout.css.ts`)
 - Create: `src/query.ts` (needed by main.tsx in this task)
 
 **Interfaces:**
+
 - Consumes: `useThemeStore` (Task 2), `Counter` (Task 3).
 - Produces: `router` (browser history), `createMemoryRouter(initialEntry?: string)`; `queryClient`, `createTestQueryClient()`; `RootLayout`, `HomePage`, `SettingsPage`, `NotFoundPage`, `ErrorBoundary`. In this task `SettingsPage` renders heading + empty form placeholder (Task 5 fills it).
 
@@ -730,7 +740,11 @@ export function RootLayout() {
           >
             Счётчик
           </Link>
-          <Link to="/settings" activeProps={{ className: navLinkActive }} inactiveProps={{ className: navLink }}>
+          <Link
+            to="/settings"
+            activeProps={{ className: navLinkActive }}
+            inactiveProps={{ className: navLink }}
+          >
             Настройки
           </Link>
         </nav>
@@ -1014,10 +1028,12 @@ git commit -m "feat: add tanstack router with explicit layout route, 404, error 
 ### Task 5: TanStack Form + zod settings form and TanStack Query demo
 
 **Files:**
+
 - Modify: `src/settings-page.tsx`
 - Create: `src/settings-api.ts`, `src/settings-page.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `createTestQueryClient` (Task 4), `settings.css` (Task 4).
 - Produces: `fetchRemoteSettings(): Promise<RemoteSettings>` (`RemoteSettings = { requests: number; lastUpdate: string }`); `SettingsPage` with a validated form (Имя, Возраст) + query block.
 
@@ -1108,8 +1124,8 @@ import { fetchRemoteSettings } from './settings-api';
 import { box, button, error, fieldStyle, heading, heading2, input, saved } from './settings.css';
 
 const usernameSchema = z.string().min(2, 'Имя: минимум 2 символа');
-const ageSchema = z
-  .coerce.number()
+const ageSchema = z.coerce
+  .number()
   .int('Возраст: введите целое число')
   .min(1, 'Возраст: минимум 1')
   .max(120, 'Возраст: максимум 120');
@@ -1201,6 +1217,7 @@ export function SettingsPage() {
 ```
 
 Notes:
+
 - TanStack Form natively accepts Standard Schema objects in `validators` (zod 4 conforms) — no adapter needed.
 - If `tsc` reports a type mismatch for `validators` (schema vs function) or `field.state.meta.errors` entries are typed as plain `string[]`, simplify `errorText` to `error.message` / `.join(', ')` accordingly and re-verify — the runtime shape for form-level standard schema issues is `{ message }` objects mapped to fields.
 
@@ -1225,10 +1242,12 @@ git commit -m "feat: settings form on tanstack form + zod and query demo on loca
 ### Task 6: E2E — settings spec + baseline regeneration (Linux image)
 
 **Files:**
+
 - Create: `e2e/settings.spec.ts`
 - Regenerate: `e2e/counter.spec.ts-snapshots/*`, new `e2e/settings.spec.ts-snapshots/*`
 
 **Interfaces:**
+
 - Consumes: built app (webServer builds automatically), testids `counter-value`, `settings-saved`, `query-data`; Russian button/link names.
 
 - [ ] **Step 1: Write the settings e2e spec**
@@ -1298,6 +1317,7 @@ git commit -m "test: e2e settings spec, nav, 404, screenshots; regenerate baseli
 ### Task 7: Docs — README (Russian) + AGENTS.md
 
 **Files:**
+
 - Modify: `README.md`, `AGENTS.md`
 
 **Interfaces:** none (docs only).
