@@ -32,8 +32,18 @@ test.describe('Настройки', () => {
     await expect(page.getByRole('button', { name: 'Светлая тема' })).toBeVisible();
   });
 
-  test('скриншот страницы (light)', async ({ page }) => {
+  test('показывает 404 для неизвестных маршрутов', async ({ page }) => {
+    await page.goto('/nope');
+
+    await expect(page.getByRole('heading', { name: 'Страница не найдена' })).toBeVisible();
+  });
+
+  test('скриншоты страницы (light, dark)', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Сохранить' })).toBeVisible();
     await expect(page).toHaveScreenshot('settings-light.png', { fullPage: true });
+
+    // Кнопка «Тёмная тема» в хедере (есть на всех страницах под layout)
+    await page.getByRole('button', { name: 'Тёмная тема' }).click();
+    await expect(page).toHaveScreenshot('settings-dark.png', { fullPage: true });
   });
 });

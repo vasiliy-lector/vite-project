@@ -162,7 +162,7 @@ e2e/
 - запуск: `yarn test:e2e` (тесты гоняются в образе, как в CI)
 - пересоздать после изменения UI: `yarn test:e2e:update`
 
-Порог различий: `maxDiffPixelRatio: 0.01` (см. `playwright.config.ts`).
+Порог различий: `maxDiffPixelRatio: 0.002` (см. `playwright.config.ts`).
 
 ## CI (GitHub Actions)
 

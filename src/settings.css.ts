@@ -17,6 +17,13 @@ export const sectionTitle = style({
   fontWeight: 600,
 });
 
+// Отступы между элементами формы (инпут → чек-бокс → кнопка)
+export const formStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+});
+
 export const themeRow = style({
   display: 'flex',
   alignItems: 'center',
