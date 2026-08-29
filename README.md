@@ -144,8 +144,7 @@ src/
 ├── entities/                                   # сложная бизнес-логика (пока пусто)
 ├── utils/                                      # утилиты (пока пусто)
 ├── vite-env.d.ts                               # типизация import.meta.env
-└── test/
-    └── setup.ts                                # jest-dom + disableRuntimeStyles + TextEncoder-полифил
+└── jest-setup.ts                               # jest-dom + disableRuntimeStyles + TextEncoder-полифил
 e2e/
 ├── counter.spec.ts           # интеграционные тесты + toHaveScreenshot
 ├── settings.spec.ts          # та же, для /settings
@@ -208,7 +207,7 @@ e2e/
   `import { button } from './Counter.css';`
 - В dev/build стили обрабатывает `@vanilla-extract/vite-plugin`.
 - В Jest — официальный `@vanilla-extract/jest-transform` (см. `jest.config.js`),
-  а `disableRuntimeStyles` в `src/test/setup.ts` отключает генерацию стилей в рантайме.
+  а `disableRuntimeStyles` в `src/jest-setup.ts` отключает генерацию стилей в рантайме.
 - Темы: `createThemeContract` задаёт контракт CSS-переменных, `createTheme` — значения
   для `light-theme` / `dark-theme`. Контракт токенов лежит в
   `src/components/shared/theme.css.ts` (доступен всем уровням как общий файл
