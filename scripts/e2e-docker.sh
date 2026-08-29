@@ -11,7 +11,6 @@ set -euo pipefail
 
 IMAGE='mcr.microsoft.com/playwright:v1.62.1-noble'
 VOLUME='vite-app-e2e-work'
-SNAPSHOT_DIR='e2e/counter.spec.ts-snapshots'
 MODE="${1:-test}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,15 +36,30 @@ PREAMBLE='
   node "$YARN_REL" install --immutable
 '
 
+# Baseline directories to copy back: one mount per e2e/<spec>-snapshots dir
+EXTRA_MOUNTS=()
+if [ "$MODE" = "update" ]; then
+  # Make sure a snapshot dir exists for every spec (new specs have none yet)
+  for spec in "$ROOT"/e2e/*.spec.ts; do
+    mkdir -p "${spec%.spec.ts}.spec.ts-snapshots"
+  done
+  while IFS= read -r snap_dir; do
+    EXTRA_MOUNTS+=(-v "$snap_dir":"/out/${snap_dir#"$ROOT"/}")
+  done < <(find "$ROOT/e2e" -maxdepth 1 -type d -name '*-snapshots')
+fi
+
 case "$MODE" in
   test)
     docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work -w /work "$IMAGE" bash -c "$PREAMBLE
 node \"\$YARN_REL\" test:e2e:ci"
     ;;
   update)
-    docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work -v "$ROOT/$SNAPSHOT_DIR":/out -w /work "$IMAGE" bash -c "$PREAMBLE
+    docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work "${EXTRA_MOUNTS[@]}" -w /work "$IMAGE" bash -c "$PREAMBLE
 node \"\$YARN_REL\" exec playwright test --update-snapshots
-cp -a $SNAPSHOT_DIR/. /out/"
+for d in \$(find /work/e2e -maxdepth 1 -type d -name '*-snapshots'); do
+  rel=\${d#/work/}
+  mkdir -p \"/out/\$rel\" && cp -a \"\$d/.\" \"/out/\$rel/\"
+done"
     ;;
   *)
     echo "Unknown mode: $MODE (use test or update)" >&2

@@ -31,6 +31,15 @@ test.describe('Счётчик', () => {
     await expect(value).toHaveText('0');
   });
 
+  test('навигация по хедеру на страницу настроек', async ({ page }) => {
+    await page.getByRole('link', { name: 'Настройки' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Настройки' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Главная' }).click();
+    await expect(page.getByRole('heading', { name: 'Счётчик' })).toBeVisible();
+  });
+
   test('переключает тему туда и обратно', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Тёмная тема' })).toBeVisible();
 

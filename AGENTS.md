@@ -4,10 +4,11 @@ Guidance for AI coding agents working in this repository.
 
 ## Project Overview
 
-`vite-app` — a Vite + React starter with TypeScript and vanilla-extract.
-The demo UI (counter with light/dark theme toggle) uses **Russian** text
-end-to-end (UI strings, test descriptions, aria labels) — preserve that
-convention for user-facing text.
+`vite-app` — a Vite + React starter template for new projects. Stack:
+**Vite 8 + React 19.2 + TypeScript 6 + vanilla-extract + TanStack Router +
+Zustand + TanStack Query + TanStack Form + zod**.
+The demo UI (counter, settings) uses **Russian** text end-to-end (UI strings,
+test descriptions, aria labels) — preserve that convention for user-facing text.
 
 - Package manager: **Yarn 4 (Berry)**, pinned via `yarnPath` in `.yarnrc.yml` (`nodeLinker: node-modules`)
 - Node: `>= 22.12` required (Vite 8); `.nvmrc` pins **24**
@@ -43,29 +44,39 @@ in the official Playwright image.
 
 ```
 src/
-├── main.tsx                  # Entry point, imports global styles
-├── App.tsx                   # App root, theme toggle (applies theme class on root div)
-├── app.css.ts                # App layout + theme toggle styles
+├── main.tsx                  # Entry: providers (QueryClientProvider) + RouterProvider
+├── router.tsx                # Code-based router: root + pathless layout route + pages
+├── root-layout.tsx/.css.ts   # Layout component: header (nav + theme toggle) + <Outlet/>
+├── settings-page.tsx/.css.ts # /settings: theme (store), TanStack Form + zod, Query demo
+├── not-found.tsx/.css.ts     # Global 404 (root notFoundComponent)
+├── error-boundary.tsx/.css.ts# Global error UI (root errorComponent)
+├── counter-store.ts          # Zustand store: counter demo
+├── theme-store.ts            # Zustand store: light/dark theme
+├── query-client.ts           # QueryClient factory
+├── mock-api.ts               # Local mock "API" (deterministic, offline)
+├── vite-env.d.ts             # import.meta.env typing
 ├── styles/
 │   ├── global.css.ts         # globalStyle (reset, font)
 │   └── theme.css.ts          # createThemeContract + light/dark themes (CSS variables)
 ├── components/
-│   ├── Counter.tsx           # Demo component (Russian UI)
+│   ├── Counter.tsx           # Demo component backed by useCounterStore
 │   ├── Counter.test.tsx      # Unit tests
 │   └── counter.css.ts        # style() + theme variables
 └── test/
-    └── setup.ts              # jest-dom + vanilla-extract disableRuntimeStyles
+    └── setup.ts              # TextEncoder polyfill + jest-dom + vanilla-extract
 e2e/
 ├── counter.spec.ts           # Playwright tests + toHaveScreenshot
-└── counter.spec.ts-snapshots/ # Baseline PNGs (Linux only)
+├── settings.spec.ts          # Playwright tests + toHaveScreenshot
+└── <spec>-snapshots/         # Baseline PNGs (Linux only)
 scripts/
 └── e2e-docker.sh             # Runs e2e in the official Playwright image
 ```
 
-Key config: `vite.config.ts` (React + vanilla-extract plugins),
-`tsconfig.json` (strict), `tsconfig.jest.json` (CJS override for Jest),
-`jest.config.js`, `playwright.config.ts`, `eslint.config.js` (flat),
-`.github/workflows/ci.yml`.
+Key config: `vite.config.ts` (React + vanilla-extract plugins, `@` alias),
+`tsconfig.json` (strict, `@/*` paths), `tsconfig.jest.json` (CJS override for
+Jest, inherits `paths`), `jest.config.js` (moduleNameMapper for `@/`),
+`playwright.config.ts`, `eslint.config.js` (flat),
+`.github/workflows/ci.yml`, `.env.example`.
 
 ## Conventions
 
@@ -76,6 +87,9 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
   to TypeScript 7 before the 7.1 release: TS 7.0 (native Go compiler) lacks
   the JS API that helper tooling (`typescript-eslint`, `ts-jest`) depends on,
   and JS API support is expected in 7.1.
+- Path alias `@/` → `src/` is wired in `tsconfig.json` (`paths`),
+  `vite.config.ts` (`resolve.alias`) and `jest.config.js` (`moduleNameMapper`).
+  Use `@/...` imports in new code.
 - Jest uses a separate CJS config (`tsconfig.jest.json`) — don't merge it
   into the main `tsconfig.json`.
 
@@ -85,8 +99,50 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
   `import { button } from './counter.css';`
 - Reuse design tokens through the theme contract (`src/styles/theme.css.ts`);
   don't hardcode colors that already exist as CSS variables.
-- Theme switching: `lightTheme`/`darkTheme` classes are toggled on the root
-  element in `App.tsx`.
+- `style()` doesn't support compound selectors (`&.active` is a type error) —
+  compose separate style objects instead.
+- Theme switching: `lightTheme`/`darkTheme` classes are applied to
+  `document.documentElement` (effect in `RootLayout` + initial class in
+  `main.tsx`), so theme variables cascade app-wide, including the 404 page
+  (which renders outside the layout).
+
+### Routing (TanStack Router, code-based)
+
+- The route tree lives in `src/router.tsx`; `register` is declared so
+  `Link`/`navigate` route paths are fully typed.
+- The layout is a **pathless layout route** (`id: 'layout'`, no `path`) whose
+  component (`RootLayout`) renders header + `<Outlet/>`. Page routes are its
+  children. Switching layouts = declaring a second pathless layout route and
+  attaching routes to it (see README "Layouts").
+- 404: `notFoundComponent` on the root route (renders outside the layout).
+  Errors: `errorComponent` on the root route.
+- The default active state of `Link` is the `active` class; use
+  `activeProps={{ className: ... }}` + `activeOptions={{ exact: true }}`
+  (there is no `NavLink`/`end` prop in this version).
+- `createAppRouter(history?)` factory allows `createMemoryHistory()` in tests.
+
+### State (Zustand)
+
+- One store per concern, flat files in `src/` (`counter-store.ts`,
+  `theme-store.ts`); always select values via selector functions
+  (`useStore((s) => s.x)`) — `eslint-plugin-zustand` bans destructuring
+  (rule `zustand/no-destructure` is configured with the store hook names).
+- ESLint: official `@tanstack/eslint-plugin-query` and
+  `@tanstack/eslint-plugin-router` flat configs are enabled.
+
+### Server state (TanStack Query) + forms (TanStack Form + zod)
+
+- `QueryClient` is created once in `main.tsx` (module level — required by the
+  `stable-query-client` rule).
+- TanStack Form validators accept Standard Schema objects directly:
+  `validators: { onSubmit: z.object(...) }`.
+- **`form.handleSubmit` does NOT call `preventDefault`** — attach it via
+  `onSubmit={(e) => { e.preventDefault(); ...; form.handleSubmit(); }}`
+  (see `settings-page.tsx`), otherwise the browser reloads the page.
+- `field.state.meta.errors` for Standard Schema validators are issue objects
+  (`{ message, path }`), not strings — map to `.message` when rendering.
+- Field binding is manual in this version (no `<field.Input/>`):
+  `value={field.state.value}` + `field.handleChange(...)` + `field.handleBlur`.
 
 ### Code style
 
@@ -100,16 +156,25 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
 
 - Unit: Jest 30 + Testing Library, jsdom; test files live next to sources
   (`*.test.tsx`). Coverage excludes `src/main.tsx`.
+- Router tests: use `createMemoryHistory()` +
+  `await waitFor(() => expect(router.state.isLoading).toBe(false))`
+  (there is no `router.loadComplete` in this version; the initial render is
+  empty until the first load settles).
+- `src/test/setup.ts` polyfills `TextEncoder`/`TextDecoder` (jsdom lacks them;
+  `@tanstack/router-core` SSR serializer needs them).
 - E2E: Playwright, Chromium only, `fullyParallel`. `webServer` builds and
   serves the app automatically; do not start `yarn preview` manually.
 - Screenshot baselines are committed to git under
-  `e2e/counter.spec.ts-snapshots/` and are **Linux-only** (file suffix
-  `-linux.png`): e2e runs in the same official Playwright image both in CI
-  and locally (`yarn test:e2e`), so a single group of baselines
-  suffices. After a UI change, regenerate them with
-  `yarn test:e2e:update`. `yarn test:e2e:ci` is CI-only (Linux) — do not
-  run it on macOS.
-- Screenshot tolerance: `maxDiffPixelRatio: 0.01`.
+  `e2e/<spec>-snapshots/` and are **Linux-only** (suffix `-chromium-linux.png`):
+  e2e runs in the same official Playwright image both in CI and locally
+  (`yarn test:e2e`), so a single group of baselines suffices.
+  `scripts/e2e-docker.sh update` copies back the snapshots of **all** specs.
+  After a UI change, regenerate with `yarn test:e2e:update`.
+  `yarn test:e2e:ci` is CI-only (Linux) — do not run it on macOS.
+- Screenshot tolerance: `maxDiffPixelRatio: 0.01`. Playwright only rewrites a
+  baseline in `--update-snapshots` mode when the diff exceeds that tolerance —
+  if a "changed" UI still matches within 1%, delete the baseline PNGs first to
+  force regeneration.
 
 ### CI (GitHub Actions)
 
@@ -138,5 +203,9 @@ Key config: `vite.config.ts` (React + vanilla-extract plugins),
 - **e2e Docker image parity**: the Playwright image tag in
   `scripts/e2e-docker.sh` must match the `container:` tag in
   `.github/workflows/ci.yml` — baselines are generated in that exact image.
+- **e2e Docker volume**: `scripts/e2e-docker.sh` reuses a named volume
+  (`vite-app-e2e-work`) for `/work`; the repo is tar-copied in on every run
+  (files deleted from the repo linger in the volume — harmless, the build
+  only follows imports).
 - `.yarn/` is gitignored except the pinned release under `.yarn/releases`.
   Don't commit the Yarn cache.
