@@ -1,3 +1,4 @@
+import arch from './eslint.arch.js';
 import js from '@eslint/js';
 import tanstackQuery from '@tanstack/eslint-plugin-query';
 import tanstackRouter from '@tanstack/eslint-plugin-router';
@@ -32,8 +33,17 @@ export default tseslint.config(
       'playwright.config.ts',
       'jest.config.js',
       'eslint.config.js',
+      'eslint.arch.js',
     ],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: { arch },
+    rules: {
+      'arch/layers': 'error',
+      'arch/colocation': 'error',
+    },
   },
   prettier,
 );

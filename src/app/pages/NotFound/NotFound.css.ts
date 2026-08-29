@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { theme } from './styles/theme.css';
+import { theme } from '@/components/shared/theme.css';
 
 // 404 рендерится вне layout, поэтому фон задаёт сама страница
 export const container = style({

@@ -1,4 +1,4 @@
-import { useCounterStore } from './counter-store';
+import { useCounterStore } from './counterStore';
 
 describe('useCounterStore', () => {
   beforeEach(() => {

@@ -1,16 +1,14 @@
 import { style } from '@vanilla-extract/css';
-import { theme } from './styles/theme.css';
+import { theme } from '@/components/shared/theme.css';
 
 export const container = style({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: 16,
-  minHeight: '100vh',
+  gap: 24,
   padding: '40px 48px',
-  textAlign: 'center',
-  background: theme.colorBackground,
-  color: theme.colorText,
+  border: `1px solid ${theme.colorCardBorder}`,
+  borderRadius: theme.borderRadius,
 });
 
 export const title = style({
@@ -19,10 +17,17 @@ export const title = style({
   fontWeight: 600,
 });
 
-export const message = style({
-  margin: 0,
-  fontSize: 14,
-  color: theme.colorError,
+export const value = style({
+  fontSize: 56,
+  fontWeight: 700,
+  lineHeight: 1,
+  fontVariantNumeric: 'tabular-nums',
+  color: theme.colorCounter,
+});
+
+export const controls = style({
+  display: 'flex',
+  gap: 12,
 });
 
 export const button = style({
@@ -36,5 +41,8 @@ export const button = style({
   cursor: 'pointer',
   ':hover': {
     opacity: 0.9,
+  },
+  ':active': {
+    transform: 'translateY(1px)',
   },
 });

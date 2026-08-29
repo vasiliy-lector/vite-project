@@ -1,8 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createQueryClient } from './query-client';
-import { SettingsPage } from './settings-page';
+import { createQueryClient } from '@/components/shared/queryClient';
+import { SettingsPage } from './SettingsPage';
 
 function renderPage() {
   return render(

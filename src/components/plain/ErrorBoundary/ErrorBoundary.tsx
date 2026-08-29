@@ -1,4 +1,4 @@
-import { button, container, message, title } from './error-boundary.css';
+import { button, container, message, title } from './ErrorBoundary.css';
 
 type ErrorBoundaryProps = {
   error: Error;

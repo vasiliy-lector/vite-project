@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { theme } from './styles/theme.css';
+import { theme } from '@/components/shared/theme.css';
 
 export const section = style({
   display: 'flex',

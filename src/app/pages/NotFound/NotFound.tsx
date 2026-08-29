@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { backLink, code, container, title } from './not-found.css';
+import { backLink, code, container, title } from './NotFound.css';
 
 // Глобальная 404-страница: подключается через notFoundComponent
 // корневого маршрута (см. router.tsx)
