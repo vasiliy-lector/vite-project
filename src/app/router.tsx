@@ -4,11 +4,11 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router';
-import { Counter } from './components/Counter';
-import { ErrorBoundary } from './error-boundary';
-import { NotFound } from './not-found';
-import { RootLayout } from './root-layout';
-import { SettingsPage } from './settings-page';
+import { ErrorBoundary } from '@/components/plain/ErrorBoundary/ErrorBoundary';
+import { IndexPage } from '@/app/pages/IndexPage/IndexPage';
+import { NotFound } from '@/app/pages/NotFound/NotFound';
+import { RootLayout } from '@/app/layouts/RootLayout/RootLayout';
+import { SettingsPage } from '@/app/pages/SettingsPage/SettingsPage';
 
 const rootRoute = createRootRoute({
   errorComponent: ({ error }) => <ErrorBoundary error={error} />,
@@ -28,7 +28,7 @@ const layoutRoute = createRoute({
 const homeRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/',
-  component: Counter,
+  component: IndexPage,
 });
 
 const settingsRoute = createRoute({

@@ -9,6 +9,6 @@ export default {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
   },
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/main.tsx'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/app/main.tsx'],
   coverageReporters: ['text', 'lcov'],
 };

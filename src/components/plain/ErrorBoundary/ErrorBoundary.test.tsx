@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from './error-boundary';
+import { ErrorBoundary } from './ErrorBoundary';
 
 describe('ErrorBoundary', () => {
   it('показывает заголовок и текст ошибки', () => {

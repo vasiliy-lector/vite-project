@@ -1,8 +1,8 @@
 import { Link, Outlet } from '@tanstack/react-router';
 import { useEffect } from 'react';
-import { header, layout, main, nav, navLink, navLinkActive, themeToggle } from './root-layout.css';
-import { darkTheme, lightTheme } from './styles/theme.css';
-import { useThemeStore } from './theme-store';
+import { darkTheme, lightTheme } from '@/components/shared/theme.css';
+import { useThemeStore } from '@/components/shared/stores/themeStore';
+import { header, layout, main, nav, navLink, navLinkActive, themeToggle } from './RootLayout.css';
 
 // Layout-компонент: определяет компоновку страницы (хедер с навигацией
 // и переключателем темы + область контента). Чтобы добавить второй лейаут,

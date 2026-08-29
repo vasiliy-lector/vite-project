@@ -2,6 +2,8 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import * as z from 'zod';
 import { useState } from 'react';
+import { fetchSettings, type Settings } from '@/components/shared/queries/mockApi';
+import { useThemeStore } from '@/components/shared/stores/themeStore';
 import {
   checkboxRow,
   errorStatus,
@@ -14,9 +16,7 @@ import {
   sectionTitle,
   statusText,
   themeRow,
-} from './settings.css';
-import { fetchSettings, type Settings } from './mock-api';
-import { useThemeStore } from './theme-store';
+} from './SettingsPage.css';
 
 const settingsSchema = z.object({
   displayName: z.string().min(2, 'Минимум 2 символа').max(32, 'Максимум 32 символа'),

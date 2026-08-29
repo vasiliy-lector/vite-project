@@ -1,5 +1,5 @@
-import { useCounterStore } from '../counter-store';
-import { button, container, controls, title, value } from './counter.css';
+import { useCounterStore } from '@/components/shared/stores/counterStore';
+import { button, container, controls, title, value } from './Counter.css';
 
 // Демо глобального состояния: значение живёт в Zustand-сторе,
 // а не в локальном state компонента

@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 import { render, screen, waitFor } from '@testing-library/react';
-import { createQueryClient } from './query-client';
+import { createQueryClient } from '@/components/shared/queryClient';
 import { createAppRouter } from './router';
 
 function renderApp(initialPath = '/') {
