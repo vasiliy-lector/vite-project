@@ -1,12 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useCounterStore } from '../counter-store';
 import { Counter } from './Counter';
 
 describe('Counter', () => {
-  it('показывает начальное значение 0', () => {
+  beforeEach(() => {
+    useCounterStore.setState({ count: 0 });
+  });
+
+  it('показывает значение из глобального стора', () => {
+    useCounterStore.setState({ count: 5 });
+    render(<Counter />);
+    expect(screen.getByTestId('counter-value')).toHaveTextContent('5');
+    expect(screen.getByTestId('counter-value')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('начинается с нуля', () => {
     render(<Counter />);
     expect(screen.getByTestId('counter-value')).toHaveTextContent('0');
-    expect(screen.getByTestId('counter-value')).toHaveAttribute('aria-live', 'polite');
   });
 
   it('увеличивает значение по кнопке «Увеличить»', async () => {
@@ -37,10 +48,5 @@ describe('Counter', () => {
     await user.click(screen.getByRole('button', { name: 'Сбросить' }));
 
     expect(screen.getByTestId('counter-value')).toHaveTextContent('0');
-  });
-
-  it('использует переданное начальное значение', () => {
-    render(<Counter initialValue={5} />);
-    expect(screen.getByTestId('counter-value')).toHaveTextContent('5');
   });
 });

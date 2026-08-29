@@ -1,6 +1,9 @@
 import js from '@eslint/js';
+import tanstackQuery from '@tanstack/eslint-plugin-query';
+import tanstackRouter from '@tanstack/eslint-plugin-router';
 import prettier from 'eslint-config-prettier';
 import reactHooks from 'eslint-plugin-react-hooks';
+import zustand from 'eslint-plugin-zustand';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -12,13 +15,16 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
-    plugins: { 'react-hooks': reactHooks },
+    plugins: { 'react-hooks': reactHooks, zustand },
     languageOptions: { globals: { ...globals.browser } },
     rules: {
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      'zustand/no-destructure': ['warn', { hooks: ['useCounterStore', 'useThemeStore'] }],
     },
   },
+  ...tanstackQuery.configs['flat/recommended'],
+  ...tanstackRouter.configs['flat/recommended'],
   {
     files: [
       'e2e/**/*.ts',

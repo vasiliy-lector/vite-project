@@ -8,6 +8,7 @@ const themeVars = {
   colorButtonText: '',
   colorCounter: '',
   colorCardBorder: '',
+  colorError: '',
   borderRadius: '',
 };
 
@@ -23,6 +24,7 @@ export const lightTheme = createTheme(theme, {
   colorButtonText: '#ffffff',
   colorCounter: '#4f46e5',
   colorCardBorder: '#e2e8f0',
+  colorError: '#dc2626',
   borderRadius,
 });
 
@@ -34,5 +36,6 @@ export const darkTheme = createTheme(theme, {
   colorButtonText: '#ffffff',
   colorCounter: '#a5b4fc',
   colorCardBorder: '#334155',
+  colorError: '#f87171',
   borderRadius,
 });
