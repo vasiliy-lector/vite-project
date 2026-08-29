@@ -171,10 +171,10 @@ Jest, inherits `paths`), `jest.config.js` (moduleNameMapper for `@/`),
   `scripts/e2e-docker.sh update` copies back the snapshots of **all** specs.
   After a UI change, regenerate with `yarn test:e2e:update`.
   `yarn test:e2e:ci` is CI-only (Linux) — do not run it on macOS.
-- Screenshot tolerance: `maxDiffPixelRatio: 0.01`. Playwright only rewrites a
+- Screenshot tolerance: `maxDiffPixelRatio: 0.002`. Playwright only rewrites a
   baseline in `--update-snapshots` mode when the diff exceeds that tolerance —
-  if a "changed" UI still matches within 1%, delete the baseline PNGs first to
-  force regeneration.
+  if a "changed" UI still matches within 0.2%, delete the baseline PNGs first
+  to force regeneration.
 
 ### CI (GitHub Actions)
 
@@ -204,8 +204,12 @@ Jest, inherits `paths`), `jest.config.js` (moduleNameMapper for `@/`),
   `scripts/e2e-docker.sh` must match the `container:` tag in
   `.github/workflows/ci.yml` — baselines are generated in that exact image.
 - **e2e Docker volume**: `scripts/e2e-docker.sh` reuses a named volume
-  (`vite-app-e2e-work`) for `/work`; the repo is tar-copied in on every run
-  (files deleted from the repo linger in the volume — harmless, the build
-  only follows imports).
+  (`vite-app-e2e-work`) for `/work` (a `node_modules` cache); the repo is
+  tar-copied on top of it on every run, so files deleted from the repo linger
+  in the volume. After a branch switch this is **not harmless**: `yarn build`
+  runs `tsc --noEmit`, which typechecks the whole `src/` (not just the import
+  graph), so stale files from another branch break the in-container build.
+  Clean up before switching branches: `docker volume rm vite-app-e2e-work`
+  (the next run recreates and reinstalls it).
 - `.yarn/` is gitignored except the pinned release under `.yarn/releases`.
   Don't commit the Yarn cache.

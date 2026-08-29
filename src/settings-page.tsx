@@ -7,6 +7,7 @@ import {
   errorStatus,
   errorText,
   fieldLabel,
+  formStyle,
   input,
   saveButton,
   section,
@@ -85,6 +86,7 @@ function SettingsContent({ initial }: { initial: Settings }) {
       </div>
 
       <form
+        className={formStyle}
         noValidate
         onSubmit={(event) => {
           // form.handleSubmit не вызывает preventDefault сам —
