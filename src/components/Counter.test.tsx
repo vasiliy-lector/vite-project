@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { resetCounterStore, useCounterStore } from './counter-store';
 import { Counter } from './Counter';
 
 describe('Counter', () => {
+  beforeEach(() => {
+    resetCounterStore();
+  });
+
   it('показывает начальное значение 0', () => {
     render(<Counter />);
     expect(screen.getByTestId('counter-value')).toHaveTextContent('0');
@@ -39,8 +44,10 @@ describe('Counter', () => {
     expect(screen.getByTestId('counter-value')).toHaveTextContent('0');
   });
 
-  it('использует переданное начальное значение', () => {
-    render(<Counter initialValue={5} />);
+  it('показывает значение из стора', () => {
+    useCounterStore.setState({ count: 5 });
+    render(<Counter />);
+
     expect(screen.getByTestId('counter-value')).toHaveTextContent('5');
   });
 });
