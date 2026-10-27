@@ -10,7 +10,14 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'coverage', 'playwright-report', 'test-results', '.yarn', 'node_modules'],
+    ignores: [
+      '**/dist',
+      '**/coverage',
+      '**/playwright-report',
+      '**/test-results',
+      '**/node_modules',
+      '**/.pnpm-store',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -29,16 +36,17 @@ export default tseslint.config(
   {
     files: [
       'e2e/**/*.ts',
-      'vite.config.ts',
+      'client/vite.config.ts',
+      'client/jest.config.js',
+      'backend/jest.config.js',
       'playwright.config.ts',
-      'jest.config.js',
       'eslint.config.js',
       'eslint.arch.js',
     ],
     languageOptions: { globals: { ...globals.node } },
   },
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['{client,backend,common}/src/**/*.{ts,tsx}'],
     plugins: { arch },
     rules: {
       'arch/layers': 'error',

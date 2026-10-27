@@ -23,13 +23,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: yarn
+          cache: pnpm
       - run: corepack enable
-      - run: yarn --version
-      - run: yarn install --immutable
-      - run: yarn typecheck
-      - run: yarn lint
-      - run: yarn format:check
+      - run: corepack prepare
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
 
   unit:
     name: Unit
@@ -40,17 +40,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: yarn
+          cache: pnpm
       - run: corepack enable
-      - run: yarn --version
-      - run: yarn install --immutable
-      - run: yarn test:coverage
+      - run: corepack prepare
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:coverage
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage/
+          path: |
+            client/coverage/
+            backend/coverage/
           retention-days: 7
 
   build:
@@ -62,33 +64,52 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: yarn
+          cache: pnpm
       - run: corepack enable
-      - run: yarn --version
-      - run: yarn install --immutable
-      - run: yarn build
+      - run: corepack prepare
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: |
+            client/dist/
+            backend/dist/
           retention-days: 7
 
   e2e:
     name: E2E
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    container: mcr.microsoft.com/playwright:v1.64.1-noble
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: vite_app
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vite_app"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/vite_app
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: yarn
+          cache: pnpm
       - run: corepack enable
-      - run: yarn --version
-      - run: yarn install --immutable
-      - run: yarn test:e2e:ci
+      - run: corepack prepare
+      - run: pnpm install --frozen-lockfile
+      # Схема/сид применяются автоматически при старте бэкенда
+      - run: pnpm test:e2e:ci
       - name: Upload E2E report
         if: always()
         uses: actions/upload-artifact@v4

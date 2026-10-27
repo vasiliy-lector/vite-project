@@ -1,13 +1,20 @@
 import { expect, test } from '@playwright/test';
 
+const API = 'http://localhost:3000';
+const DEFAULT_SETTINGS = { displayName: 'Гость', compactMode: false };
+
 test.describe('Настройки', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    // Персистентные настройки: перед каждым тестом восстанавливаем
+    // значения по умолчанию на бэкенде.
+    await request.put(`${API}/api/settings`, { data: DEFAULT_SETTINGS });
     await page.goto('/settings');
   });
 
-  test('загружает настройки из локального mock', async ({ page }) => {
+  test('загружает настройки с бэкенда', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Настройки' })).toBeVisible();
-    await expect(page.getByTestId('settings-loading')).toBeVisible();
+    // Ждём фактическую загрузку с сервера (auto-wait), а не сам индикатор —
+    // с локальным бэкендом он может мелькнуть слишком быстро
     await expect(page.getByTestId('display-name')).toHaveValue('Гость');
   });
 

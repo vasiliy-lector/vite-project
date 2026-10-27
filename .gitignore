@@ -25,9 +25,8 @@ yarn-error.log*
 .DS_Store
 *.local
 
-# Yarn (Berry): only pinned releases are committed
-.yarn/*
-!.yarn/releases
-!.yarn/patches
-!.yarn/plugins
-!.yarn/sdks
+# pnpm
+.pnpm-store/
+
+# Backend embedded database (PGlite data dir, if configured)
+.pglite/
