@@ -19,13 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Порядок важен: pnpm ставится ДО setup-node, иначе setup-node с
+      # cache: pnpm не находит исполняемый файл pnpm.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # версия берётся из packageManager в package.json (pnpm@12.15.0)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: corepack enable
-      - run: corepack prepare
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
@@ -36,13 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: corepack enable
-      - run: corepack prepare
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:coverage
       - name: Upload coverage
@@ -60,13 +63,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: corepack enable
-      - run: corepack prepare
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Upload dist
@@ -100,13 +103,13 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/vite_app
     steps:
       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: corepack enable
-      - run: corepack prepare
       - run: pnpm install --frozen-lockfile
       # Схема/сид применяются автоматически при старте бэкенда
       - run: pnpm test:e2e:ci

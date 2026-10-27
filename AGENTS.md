@@ -269,8 +269,12 @@ tsconfig.build.json` → `node dist/backend/src/app/main.js` (start script).
   `build` (pnpm -r build), `e2e` (Playwright in the official image
   `mcr.microsoft.com/playwright:v1.64.1-noble` with a `postgres:16` service;
   `DATABASE_URL` env is set for it).
-- Node 24 + pnpm cache via `actions/setup-node` (`cache: pnpm`) + corepack;
-  installs with `pnpm install --frozen-lockfile` — **commit
+- Install pnpm with `pnpm/action-setup@v4` **before** `actions/setup-node`
+  (version comes from `packageManager`), then setup-node with `cache: pnpm`
+  — otherwise setup-node cannot find the pnpm binary when computing the cache
+  key («Unable to locate executable file: pnpm»). Don't use manual
+  `corepack enable/prepare` steps in the workflow. Installs with
+  `pnpm install --frozen-lockfile` — **commit
   `pnpm-lock.yaml`** whenever dependencies change.
 - Artifacts (7-day retention): `client/coverage/`, `backend/coverage/`,
   `client/dist/`, `backend/dist/`, `playwright-report/` + `test-results/`.
@@ -281,6 +285,8 @@ tsconfig.build.json` → `node dist/backend/src/app/main.js` (start script).
   default. `pnpm-workspace.yaml` lists `allowBuilds: {esbuild: true,
 '@parcel/watcher': true, unrs-resolver: true}` — keep it, or Vite/tsx lose
   their native binaries.
+- **CI order**: pnpm must be installed before `actions/setup-node` runs with
+  `cache: pnpm` (use `pnpm/action-setup@v4`; see «CI» above).
 - **Playwright image parity**: the image tag in `scripts/e2e-docker.sh` and
   `ci.yml` must match the `@playwright/test` version — baselines are
   generated in that exact image.
