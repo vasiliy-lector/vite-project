@@ -1,0 +1,9 @@
+packages:
+  - client
+  - backend
+  - common
+
+allowBuilds:
+  esbuild: true
+  '@parcel/watcher': true
+  unrs-resolver: true

@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 
+const API = 'http://localhost:3000';
+
 test.describe('Счётчик', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    // Персистентный счётчик: перед каждым тестом сбрасываем значение
+    // на бэкенде, чтобы тесты были детерминированными.
+    await request.post(`${API}/api/counter`, { data: { action: 'reset' } });
     await page.goto('/');
   });
 

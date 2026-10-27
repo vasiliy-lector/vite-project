@@ -9,7 +9,7 @@ set -euo pipefail
 #   test    (default) — run the e2e tests
 #   update  — regenerate baselines and copy them back into the repo
 
-IMAGE='mcr.microsoft.com/playwright:v1.62.1-noble'
+IMAGE='mcr.microsoft.com/playwright:v1.64.1-noble'
 VOLUME='vite-app-e2e-work'
 MODE="${1:-test}"
 
@@ -20,26 +20,25 @@ if ! command -v docker >/dev/null; then
   exit 1
 fi
 
+# Re-sync the repo into the work volume on every run (rsync --delete keeps
+# the installed node_modules but removes stale files from other branches,
+# which used to break the in-container build). pnpm is provided via corepack
+# from the pinned packageManager in package.json.
+# If your proxy is only reachable from the host, run with
+#   docker run --network=host ...   or adjust the proxy URLs below.
 PREAMBLE='
   set -euo pipefail
-  tar -C /src \
-    --exclude=./node_modules \
-    --exclude=./.git \
-    --exclude=./.yarn/cache \
-    --exclude=./dist \
-    --exclude=./coverage \
-    --exclude=./test-results \
-    --exclude=./playwright-report \
-    -cf - . | tar -C /work -xf -
-  YARN_REL="$(sed -n "s/^yarnPath: //p" .yarnrc.yml)"
-  [ -n "$YARN_REL" ] || { echo "yarnPath not found in .yarnrc.yml" >&2; exit 1; }
-  node "$YARN_REL" install --immutable
+  mkdir -p /work
+  rsync -a --delete --exclude=node_modules --exclude=.git --exclude=dist --exclude=coverage --exclude=test-results --exclude=playwright-report /src/ /work/
+  PM=$(node -e "process.stdout.write(require('"'"'./package.json'"'"').packageManager)")
+  corepack enable
+  corepack prepare "$PM" --activate
+  pnpm install --frozen-lockfile
 '
 
 # Baseline directories to copy back: one mount per e2e/<spec>-snapshots dir
 EXTRA_MOUNTS=()
 if [ "$MODE" = "update" ]; then
-  # Make sure a snapshot dir exists for every spec (new specs have none yet)
   for spec in "$ROOT"/e2e/*.spec.ts; do
     mkdir -p "${spec%.spec.ts}.spec.ts-snapshots"
   done
@@ -51,11 +50,11 @@ fi
 case "$MODE" in
   test)
     docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work -w /work "$IMAGE" bash -c "$PREAMBLE
-node \"\$YARN_REL\" test:e2e:ci"
+pnpm test:e2e:ci"
     ;;
   update)
     docker run --rm -v "$ROOT":/src:ro -v "$VOLUME":/work "${EXTRA_MOUNTS[@]}" -w /work "$IMAGE" bash -c "$PREAMBLE
-node \"\$YARN_REL\" exec playwright test --update-snapshots
+pnpm exec playwright test --update-snapshots
 for d in \$(find /work/e2e -maxdepth 1 -type d -name '*-snapshots'); do
   rel=\${d#/work/}
   mkdir -p \"/out/\$rel\" && cp -a \"\$d/.\" \"/out/\$rel/\"

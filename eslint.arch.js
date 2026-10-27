@@ -1,37 +1,52 @@
 import path from 'node:path';
 
-// Правило слойной архитектуры src/ (см. README «Архитектура: уровни и правила
-// импортов» и AGENTS.md «Architecture & import layers»):
+// Архитектурные слои монорепо (см. AGENTS.md «Architecture & import layers»):
 //
-//   L1 app/common     — файлы прямо в src/app/ (кроме pages/ и layouts/)
-//   L2 app/layouts
-//   L3 app/pages
-//   L4 components/complex
-//   L5 components/plain
-//   L6 components/shared
-//   L7 entities
-//   L8 utils
+//   client:  src/app → src/components → src/helpers → src/model → src/utils
+//   backend: src/app → src/controllers → src/model → src/utils
+//   common:  src/entities → src/shared
 //
-// Импорты разрешены «вниз» (в более низкий уровень), из своей папки и (для
-// L1/L4/L6) в пределах своего уровня. Отдельные правила: главный файл
-// React-компонента, css из нижних уровней только из shared, plain без
-// импортов других компонентов, запрет react в entities/utils.
+//   * импорты только «вниз» по уровням (в свою папку и между папками одного
+//     уровня — можно; в более высокий уровень — нельзя);
+//   * извне папки компонента/сущности доступен только главный файл
+//     <Name>/<Name>.* (или index.*) — «кишки» (css, доп. модули) только из своей папки;
+//   * страницы/компоненты/сущности лежат в собственных папках (colocation);
+//   * в helpers клиента и в model/utils — без React; из common нельзя тянуть в
+//     прикладные пакеты и наоборот (common — общий нижний слой).
 
-const SHARED = 'src/components/shared';
+const PKG_DIRS = ['client', 'backend', 'common'];
 
-// Папки React-компонентов: главный файл можно импортировать извне, «кишки» — нет
-const COMPONENT_ROOTS = [
-  'src/app/pages',
-  'src/app/layouts',
-  'src/components/complex',
-  'src/components/plain',
-];
-
-// Уровни, где разрешены импорты из своего уровня (в разных папках)
-const SAME_LEVEL_ALLOWED = new Set([1, 4, 6]);
-
-// Уровни с запретом импорта react/react-dom
-const NO_REACT_LEVELS = new Set([7, 8]);
+const CONFIGS = {
+  client: {
+    // уровень = индекс в этом списке (1-based), null — вне слоёв
+    layers: ['src/app', 'src/components', 'src/helpers', 'src/model', 'src/utils'],
+    // папки, к которым применяется «главный файл» и colocation
+    componentRoots: [
+      'src/app/layouts',
+      'src/app/pages',
+      'src/components',
+      'src/helpers',
+      'src/model',
+      'src/utils',
+    ],
+    // где запрещён react и не должно быть .tsx
+    noReact: ['src/helpers', 'src/model', 'src/utils'],
+    noTsxIn: ['src/helpers'],
+  },
+  backend: {
+    layers: ['src/app', 'src/controllers', 'src/model', 'src/utils'],
+    componentRoots: ['src/controllers', 'src/model', 'src/utils'],
+    // react в бэкенде не используется; кросс-запрет — на уровне common ↔ приложения
+    noReact: [],
+    noTsxIn: [],
+  },
+  common: {
+    layers: ['src/entities', 'src/shared'],
+    componentRoots: ['src/entities', 'src/shared'],
+    noReact: ['src/entities', 'src/shared'],
+    noTsxIn: [],
+  },
+};
 
 const MAIN_FILE_EXTENSIONS = ['.ts', '.tsx', '.jsx', '.js'];
 
@@ -39,54 +54,64 @@ function inDir(relPath, dir) {
   return relPath === dir || relPath.startsWith(`${dir}/`);
 }
 
-function getLevel(relPath) {
-  if (inDir(relPath, 'src/app/layouts')) return 2;
-  if (inDir(relPath, 'src/app/pages')) return 3;
-  if (inDir(relPath, 'src/app')) return 1;
-  if (inDir(relPath, 'src/components/complex')) return 4;
-  if (inDir(relPath, 'src/components/plain')) return 5;
-  if (inDir(relPath, SHARED)) return 6;
-  if (inDir(relPath, 'src/entities')) return 7;
-  if (inDir(relPath, 'src/utils')) return 8;
-  return null;
+// 'client/src/app/main.tsx' → 'client'; иначе null
+function pkgOf(relPath) {
+  const first = relPath.split('/')[0];
+  return PKG_DIRS.includes(first) ? first : null;
+}
+
+function relInPkg(relPath, pkg) {
+  return relPath.startsWith(`${pkg}/`) ? relPath.slice(pkg.length + 1) : null;
+}
+
+function getLevel(pkg, relInPkgPath) {
+  const cfg = CONFIGS[pkg];
+  const idx = cfg.layers.findIndex((dir) => inDir(relInPkgPath, dir));
+  return idx === -1 ? null : idx + 1;
 }
 
 function getRelPath(context) {
   return path.relative(context.cwd, context.filename).split(path.sep).join('/');
 }
 
-// Спецификатор импорта → путь относительно корня (src/…); null для внешних модулей
+// Спецификатор импорта → путь относительно корня монорепо ('client/src/…',
+// 'common/src/…'); null — для внешних модулей.
 function resolveSpec(sourceRel, spec) {
-  const dir = path.posix.dirname(sourceRel);
-  if (spec.startsWith('./') || spec.startsWith('../')) {
-    return path.posix.normalize(path.posix.join(dir, spec));
+  const sourcePkg = pkgOf(sourceRel);
+
+  if (spec.startsWith('@common/')) {
+    return `common/src/${spec.slice('@common/'.length)}`;
   }
   if (spec.startsWith('@/')) {
-    return `src/${spec.slice(2)}`;
+    return sourcePkg ? `${sourcePkg}/src/${spec.slice(2)}` : null;
+  }
+  if (spec.startsWith('./') || spec.startsWith('../')) {
+    const dir = path.posix.dirname(sourceRel);
+    return path.posix.normalize(path.posix.join(dir, spec));
   }
   return null;
 }
 
-// Компонентная папка, в которой лежит цель: <root>/<Name>/…
-function getComponentFolder(targetRel) {
-  for (const root of COMPONENT_ROOTS) {
-    if (!inDir(targetRel, root)) continue;
-    const name = targetRel.slice(root.length + 1).split('/')[0];
+// Папка компонента/сущности, в которой лежит цель: <root>/<Name>/…
+function getComponentFolder(targetRelInPkg, cfg) {
+  for (const root of cfg.componentRoots) {
+    if (!inDir(targetRelInPkg, root)) continue;
+    const name = targetRelInPkg.slice(root.length + 1).split('/')[0];
     return { root, name, folder: `${root}/${name}` };
   }
   return null;
 }
 
-// Главный файл компонента: <root>/<Name>/<Name>[.tsx|.ts|.jsx|.js]
-function isComponentMainFile(targetRel) {
-  const component = getComponentFolder(targetRel);
-  if (!component) return false;
-  const relInFolder = targetRel.slice(component.folder.length + 1);
+// Главный файл папки: index.<ext> или <Folder>.<ext>, где ext ∈ MAIN_FILE_EXTENSIONS
+// (то есть theme.css.ts для папки theme — НЕ главный, нужен theme.ts)
+function isMainFile(targetRelInPkg, component) {
+  const relInFolder = targetRelInPkg.slice(component.folder.length + 1);
   if (relInFolder.includes('/')) return false;
   const dot = relInFolder.lastIndexOf('.');
   const ext = dot === -1 ? '' : relInFolder.slice(dot);
   if (ext && !MAIN_FILE_EXTENSIONS.includes(ext)) return false;
-  return relInFolder.slice(0, relInFolder.length - ext.length) === component.name;
+  const base = relInFolder.slice(0, relInFolder.length - ext.length);
+  return base === component.name || base === 'index';
 }
 
 function isReactPackage(spec) {
@@ -98,31 +123,53 @@ function isReactPackage(spec) {
   );
 }
 
-function checkImport(context, sourceRel, spec, node) {
-  const sourceLevel = getLevel(sourceRel);
+// true, если import «кишки» чужой папки (наружу тянут не главный файл)
+function isInsideForeignFolder(sourceRelInPkg, targetRelInPkg, cfg) {
+  const component = getComponentFolder(targetRelInPkg, cfg);
+  if (!component) return false;
+  if (inDir(sourceRelInPkg, component.folder)) return false;
+  return !isMainFile(targetRelInPkg, component);
+}
 
-  // Бан: react/react-dom в entities и utils
-  if (sourceLevel !== null && NO_REACT_LEVELS.has(sourceLevel) && isReactPackage(spec)) {
+function checkImport(context, sourceRel, spec, node) {
+  const sourcePkg = pkgOf(sourceRel);
+  if (!sourcePkg) return;
+
+  // Бан react в helpers/model/utils (client) и в entities/shared (common)
+  if (
+    isReactPackage(spec) &&
+    CONFIGS[sourcePkg].noReact.some((dir) => inDir(relInPkg(sourceRel, sourcePkg), dir))
+  ) {
     context.report({ node, messageId: 'bannedPackage', data: { spec } });
     return;
   }
 
   const targetRel = resolveSpec(sourceRel, spec);
   if (targetRel === null) return; // внешний модуль — на уровни не распространяется
-  const targetLevel = getLevel(targetRel);
-  if (targetLevel === null || sourceLevel === null) return; // файлы вне уровней
+  const targetPkg = pkgOf(targetRel);
+  if (!targetPkg) return;
 
-  const sourceDir = path.posix.dirname(sourceRel);
-  const targetDir = path.posix.dirname(targetRel);
-  const sameFolder = sourceDir === targetDir;
+  const sourceInPkg = relInPkg(sourceRel, sourcePkg);
+  const targetInPkg = relInPkg(targetRel, targetPkg);
 
-  // Правило plain: plain-компоненты не импортируют другие React-компоненты
-  if (sourceLevel === 5 && isComponentMainFile(targetRel) && !sameFolder) {
-    context.report({ node, messageId: 'plainImportsComponent', data: { spec } });
+  if (sourcePkg !== targetPkg) {
+    // common разрешён как общий нижний слой; всё остальное между пакетами — нельзя
+    if (!(targetPkg === 'common' && sourcePkg !== 'common')) {
+      context.report({ node, messageId: 'crossPackage', data: { spec, sourcePkg, targetPkg } });
+      return;
+    }
+    // common всегда снизу: сверяем только «внутренности» папок по конфигам common
+    if (isInsideForeignFolder(sourceInPkg, targetInPkg, CONFIGS[targetPkg])) {
+      context.report({ node, messageId: 'componentInnards', data: { spec } });
+    }
     return;
   }
 
-  // Уровни: вверх нельзя
+  const sourceLevel = getLevel(sourcePkg, sourceInPkg);
+  const targetLevel = getLevel(targetPkg, targetInPkg);
+  if (sourceLevel === null || targetLevel === null) return; // файлы вне слоёв
+
+  // Уровни: вверх нельзя; внутри уровня cross-folder разрешён; вниз — можно
   if (targetLevel < sourceLevel) {
     context.report({
       node,
@@ -132,43 +179,34 @@ function checkImport(context, sourceRel, spec, node) {
     return;
   }
 
-  // Свой уровень: можно только в своей папке, либо для L1/L4/L6
-  if (targetLevel === sourceLevel) {
-    if (sameFolder) return;
-    if (!SAME_LEVEL_ALLOWED.has(sourceLevel)) {
-      context.report({ node, messageId: 'sameLevel', data: { spec, sourceLevel } });
-      return;
-    }
-  }
-
-  // Главный файл: извне папки компонента импортируется только <Name>/<Name>
-  const component = getComponentFolder(targetRel);
-  if (component && !inDir(sourceDir, component.folder)) {
-    if (!isComponentMainFile(targetRel)) {
-      context.report({ node, messageId: 'componentInnards', data: { spec } });
-    }
+  // Правило «главного файла» наружу из папки
+  if (isInsideForeignFolder(sourceInPkg, targetInPkg, CONFIGS[sourcePkg])) {
+    context.report({ node, messageId: 'componentInnards', data: { spec } });
     return;
   }
 
-  // CSS: из нижних уровней — только из components/shared
-  const isCss = spec.endsWith('.css') || spec.endsWith('.css.ts');
-  if (isCss && !sameFolder) {
-    if (sourceLevel === 1 && targetLevel === 1) return; // app/common: общие стили
-    if (inDir(targetRel, SHARED)) return;
-    context.report({ node, messageId: 'cssOutsideShared', data: { spec } });
+  // В src/helpers (клиент) не тащим .tsx
+  if (
+    CONFIGS[sourcePkg].noTsxIn.some((dir) => inDir(sourceInPkg, dir)) &&
+    /\.(tsx|jsx)$/.test(path.posix.basename(targetRel))
+  ) {
+    context.report({ node, messageId: 'noTsx', data: { spec } });
   }
 }
 
 function checkColocation(context) {
   const relPath = getRelPath(context);
-  for (const root of COMPONENT_ROOTS) {
-    if (!inDir(relPath, root)) continue;
-    const rest = relPath.slice(root.length + 1);
+  const pkg = pkgOf(relPath);
+  if (!pkg) return;
+  const inPkg = relInPkg(relPath, pkg);
+  for (const root of CONFIGS[pkg].componentRoots) {
+    if (!inDir(inPkg, root)) continue;
+    const rest = inPkg.slice(root.length + 1);
     if (!rest.includes('/')) {
       context.report({
         loc: { line: 1, column: 0 },
         messageId: 'noOwnFolder',
-        data: { file: relPath, expected: `${root}/<name>/<file>` },
+        data: { file: relPath, expected: `${pkg}/${root}/<name>/<file>` },
       });
     }
     return;
@@ -176,28 +214,26 @@ function checkColocation(context) {
 }
 
 export default {
-  meta: { name: 'eslint-plugin-arch', version: '1.0.0' },
+  meta: { name: 'eslint-plugin-arch', version: '2.0.0' },
   rules: {
     layers: {
       meta: {
         type: 'problem',
         docs: {
           description:
-            'Слойная архитектура: импорты только вниз по уровням, главный файл компонента, css из shared, plain без компонентов, без react в entities/utils',
+            'Слойная архитектура пакетов: импорты только вниз по уровням, только главный файл папки снаружи, без react в helpers/model/utils',
         },
         messages: {
           higherLevel:
-            'Импорт «{{spec}}» запрещён: файл уровня {{sourceLevel}} импортирует из более высокого уровня {{targetLevel}}. Уровни разрешают импорт только вниз (L1 app/common → … → L8 utils) или из своей папки.',
-          sameLevel:
-            'Импорт «{{spec}}» запрещён: внутри уровня {{sourceLevel}} можно импортировать только из своей папки (свой уровень целиком разрешён только для app/common, components/complex и components/shared).',
+            'Импорт «{{spec}}» запрещён: файл уровня {{sourceLevel}} импортирует из более высокого уровня {{targetLevel}}. Разрешены импорты только вниз по слоям (или из своей папки).',
+          crossPackage:
+            'Импорт «{{spec}}» запрещён: пакет {{sourcePkg}} не может импортировать из {{targetPkg}} (common — общий нижний слой, cross-импорты прикладных пакетов недопустимы).',
           componentInnards:
-            'Импорт «{{spec}}» запрещён: извне папки React-компонента можно импортировать только его главный файл (<имя папки>/<имя папки>). Внутренние файлы (стили, хуки, подкомпоненты) доступны только из своей папки.',
-          cssOutsideShared:
-            'Импорт «{{spec}}» запрещён: стили (*.css) из других папок/уровней можно импортировать только из components/shared (общие файлы). Стили из своей папки — без ограничений.',
-          plainImportsComponent:
-            'Импорт «{{spec}}» запрещён: plain-компоненты (components/plain) не импортируют другие React-компоненты. Если нужен другой компонент — вынесите его в components/complex.',
+            'Импорт «{{spec}}» запрещён: извне папки компонента/сущности можно импортировать только главный файл (<имя>/<имя>) или index. Внутренние файлы (стили, хелперы, данные) доступны только из своей папки.',
+          noTsx:
+            'Импорт «{{spec}}» запрещён: в src/helpers (клиент) не должно быть React-компонентов (.tsx) — только общие небескомпонентные утилиты/хуки.',
           bannedPackage:
-            'Импорт «{{spec}}» запрещён: в entities и utils нет привязки к React (чистый TypeScript).',
+            'Импорт «{{spec}}» запрещён: в helpers/model/utils (клиент) и в entities/shared (common) нет привязки к React.',
         },
         schema: [],
       },
@@ -225,11 +261,11 @@ export default {
         type: 'problem',
         docs: {
           description:
-            'Страницы, layout-ы и компоненты (complex/plain) лежат в собственных папках, а не в корне уровня',
+            'Компоненты/страницы/сущности лежат в собственных папках, а не в корне уровня',
         },
         messages: {
           noOwnFolder:
-            '«{{file}}» должен лежать в своей папке: {{expected}}. Плоские файлы в корне уровня (pages/layouts/complex/plain) не допускаются.',
+            '«{{file}}» должен лежать в своей папке: {{expected}}. Плоские файлы в корне уровня запрещены.',
         },
         schema: [],
       },
